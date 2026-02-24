@@ -1,1 +1,608 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mueblería Digital - Ecosistema de Ventas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        
+        .factura-ticket {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 font-sans text-stone-800 flex flex-col min-h-screen">
+
+    <div id="splash-screen" class="fixed inset-0 bg-stone-900 z-[100] flex flex-col items-center justify-center transition-opacity duration-700">
+        <img src="https://raw.githubusercontent.com/padillawill17/Muebles-Nova/refs/heads/main/MN.png" alt="MueblesNova Logo" class="w-48 md:w-64 h-auto animate-pulse">
+        <div class="mt-8 flex items-center space-x-2">
+            <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce"></div>
+            <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+    </div>
+
+    <nav class="bg-stone-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('store-view')">
+                    <img src="https://raw.githubusercontent.com/padillawill17/Muebles-Nova/refs/heads/main/MN.png" alt="Logo MueblesNova" class="h-10 w-auto">
+                    <span class="font-bold text-xl tracking-wider">MueblesNova</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <button onclick="switchTab('store-view')" class="hover:text-amber-400 transition"><i class="fa-solid fa-store md:hidden"></i><span class="hidden md:inline">Tienda</span></button>
+                    <button onclick="switchTab('tracking-view')" class="hover:text-amber-400 transition"><i class="fa-solid fa-truck-fast md:hidden"></i><span class="hidden md:inline">Rastreo</span></button>
+                    <button onclick="switchTab('kpi-view')" class="hover:text-amber-400 transition"><i class="fa-solid fa-chart-line md:hidden"></i><span class="hidden md:inline">Dashboard</span></button>
+                    <button onclick="switchTab('cart-view')" class="relative hover:text-amber-400 transition">
+                        <i class="fa-solid fa-shopping-cart text-xl"></i>
+                        <span id="cart-badge" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <section id="store-view" class="view-section active">
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-stone-900 mb-2">Renueva tu espacio</h1>
+                <p class="text-stone-600">Descubre nuestra colección con los mejores acabados y entrega garantizada.</p>
+            </div>
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+        </section>
+
+        <section id="cart-view" class="view-section">
+            <h2 class="text-2xl font-bold text-stone-900 mb-6"><i class="fa-solid fa-cart-shopping mr-2 text-amber-700"></i>Tu Carrito</h2>
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="lg:w-2/3 bg-white p-6 rounded-lg shadow-md border border-stone-200">
+                    <div id="cart-items" class="space-y-4">
+                    </div>
+                </div>
+                <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md border border-stone-200 h-fit">
+                    <h3 class="text-xl font-bold border-b border-stone-200 pb-4 mb-4">Resumen de Compra</h3>
+                    <div class="flex justify-between mb-2 text-stone-600">
+                        <span>Subtotal (IVAI)</span>
+                        <span id="cart-subtotal">₡0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2 text-stone-600">
+                        <span>Envío</span>
+                        <span class="text-green-600 font-medium">Gratis</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-xl border-t border-stone-200 pt-4 mb-6">
+                        <span>Total</span>
+                        <span id="cart-total" class="text-amber-700">₡0.00</span>
+                    </div>
+                    <div class="space-y-3">
+                        <button onclick="openCheckoutModal()" class="w-full bg-stone-900 text-white py-3 rounded-lg font-bold hover:bg-stone-800 transition flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-credit-card mr-2"></i> Pagar con Tarjeta
+                        </button>
+                        <button onclick="payWithWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center shadow-md">
+                            <i class="fa-brands fa-whatsapp text-xl mr-2"></i> Comprar por WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tracking-view" class="view-section">
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md border border-stone-200 text-center">
+                <h2 class="text-2xl font-bold text-stone-900 mb-2"><i class="fa-solid fa-box-open mr-2 text-amber-700"></i>Logística Digital</h2>
+                <p class="text-stone-600 mb-6">Rastrea tu pedido ingresando el número de orden o consecutivo.</p>
+                <div class="flex gap-4 mb-8">
+                    <input type="text" id="order-input" placeholder="Ej: ORD-123456" class="flex-grow border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600">
+                    <button onclick="trackOrder()" class="bg-amber-700 text-white px-6 py-2 rounded-lg font-bold hover:bg-amber-800 transition">Buscar</button>
+                </div>
+                
+                <div id="tracking-result" class="hidden text-left mt-8 border-t border-stone-200 pt-8">
+                    <h3 class="font-bold text-lg mb-4">Estado de la Orden: <span id="track-order-id" class="text-amber-700"></span></h3>
+                    <div class="relative pt-4">
+                        <div class="absolute left-4 top-0 h-full w-1 bg-stone-200"></div>
+                        <div class="relative flex items-center mb-6">
+                            <div class="w-9 h-9 bg-green-600 rounded-full flex items-center justify-center text-white font-bold z-10 shadow"><i class="fa-solid fa-check"></i></div>
+                            <div class="ml-4">
+                                <h4 class="font-bold text-stone-900">Pago Confirmado</h4>
+                                <p class="text-sm text-stone-500">Factura electrónica emitida y enviada a Hacienda.</p>
+                            </div>
+                        </div>
+                        <div class="relative flex items-center mb-6">
+                            <div class="w-9 h-9 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold z-10 shadow"><i class="fa-solid fa-hammer"></i></div>
+                            <div class="ml-4">
+                                <h4 class="font-bold text-stone-900">En Preparación / Ensamblaje</h4>
+                                <p class="text-sm text-stone-500">Preparando tus muebles con el mayor cuidado en bodega.</p>
+                            </div>
+                        </div>
+                        <div class="relative flex items-center mb-6">
+                            <div class="w-9 h-9 bg-stone-300 rounded-full flex items-center justify-center text-stone-600 font-bold z-10"><i class="fa-solid fa-truck"></i></div>
+                            <div class="ml-4">
+                                <h4 class="font-bold text-stone-500">En Tránsito</h4>
+                                <p class="text-sm text-stone-400">Pendiente de despacho a tu domicilio.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="kpi-view" class="view-section">
+            <div class="mb-6 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-900"><i class="fa-solid fa-chart-pie mr-2 text-amber-700"></i>Dashboard Administrativo</h2>
+                    <p class="text-stone-600">Ecosistema Digital - Monitoreo de Metas</p>
+                </div>
+                <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase border border-green-200">Mes 2 de 6</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-amber-600">
+                    <p class="text-sm text-stone-500 font-bold uppercase">Crecimiento Ventas</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-3xl font-bold text-stone-900">+8.5%</span>
+                        <span class="text-green-600 text-sm font-medium"><i class="fa-solid fa-arrow-trend-up"></i> Meta: 20%</span>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-stone-800">
+                    <p class="text-sm text-stone-500 font-bold uppercase">Tráfico E-commerce</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-3xl font-bold text-stone-900">12,450</span>
+                        <span class="text-stone-500 text-sm">visitas/mes</span>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                    <p class="text-sm text-stone-500 font-bold uppercase">Conversión WhatsApp</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-3xl font-bold text-stone-900">34%</span>
+                        <span class="text-green-600 text-sm font-medium"><i class="fa-solid fa-arrow-trend-up"></i> Alta</span>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-600">
+                    <p class="text-sm text-stone-500 font-bold uppercase">Facturación Electrónica</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-3xl font-bold text-stone-900">142</span>
+                        <span class="text-stone-500 text-sm">DTEs emitidos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-stone-200">
+                <h3 class="font-bold text-lg text-stone-900 mb-4">Distribución de Canales de Pago</h3>
+                <div class="w-full bg-stone-200 rounded-full h-4 mb-2 flex overflow-hidden">
+                    <div class="bg-stone-800 h-4" style="width: 55%" title="Tarjeta de Crédito (55%)"></div>
+                    <div class="bg-green-500 h-4" style="width: 35%" title="WhatsApp / SINPE (35%)"></div>
+                    <div class="bg-amber-600 h-4" style="width: 10%" title="Efectivo (10%)"></div>
+                </div>
+                <div class="flex gap-4 text-sm mt-4 font-medium flex-wrap">
+                    <span class="flex items-center"><span class="w-3 h-3 bg-stone-800 rounded-full mr-2"></span>Pasarela Web (55%)</span>
+                    <span class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>WhatsApp / SINPE (35%)</span>
+                    <span class="flex items-center"><span class="w-3 h-3 bg-amber-600 rounded-full mr-2"></span>Otros (10%)</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-900 text-stone-300 py-8 mt-auto border-t-4 border-amber-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h4 class="text-white font-bold text-lg mb-4 flex items-center">
+                    <img src="https://raw.githubusercontent.com/padillawill17/Muebles-Nova/refs/heads/main/MN.png" alt="Logo MueblesNova" class="h-6 w-auto mr-2">
+                    MueblesNova
+                </h4>
+                <p class="text-sm">Tu ecosistema digital de muebles. Calidad, diseño y entrega eficiente a un clic de distancia para toda Costa Rica.</p>
+              <p class="text-sm">página de simulación, no es un sitio web real. No registrar datos reales.</p>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-lg mb-4">Atención al Cliente</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" onclick="switchTab('tracking-view')" class="hover:text-amber-400 transition">Rastreo de pedidos</a></li>
+                    <li><a href="#" class="hover:text-amber-400 transition">Políticas de garantía</a></li>
+                    <li><a href="#" class="hover:text-amber-400 transition">Consulta de Factura Electrónica</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-lg mb-4">Comunidad Digital</h4>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center hover:bg-blue-600 transition"><i class="fa-brands fa-facebook-f text-white"></i></a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center hover:bg-pink-600 transition"><i class="fa-brands fa-instagram text-white"></i></a>
+                    <a href="https://wa.me/50688888888" target="_blank" class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center hover:bg-green-500 transition"><i class="fa-brands fa-whatsapp text-white"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="checkout-modal" class="modal fixed inset-0 bg-black bg-opacity-60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-stone-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-lock mr-2 text-amber-500"></i>Pago Seguro</h3>
+                <button onclick="closeModal('checkout-modal')" class="text-white hover:text-red-400 transition text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="payment-form" onsubmit="processPayment(event)">
+                    
+                    <h4 class="font-bold text-stone-800 border-b border-stone-200 pb-2 mb-4">Datos de Facturación Electrónica</h4>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Nombre Completo / Razón Social <span class="text-red-500">*</span></label>
+                            <input type="text" id="cust-name" required class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-1">Cédula (Física o Jurídica) <span class="text-red-500">*</span></label>
+                                <input type="text" id="cust-id" required placeholder="Ej: 1-1234-5678" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-1">Teléfono <span class="text-red-500">*</span></label>
+                                <input type="tel" id="cust-phone" required placeholder="8888-8888" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Correo Electrónico <span class="text-red-500">*</span></label>
+                            <input type="email" id="cust-email" required placeholder="correo@ejemplo.com" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Dirección Exacta de Entrega <span class="text-red-500">*</span></label>
+                            <textarea id="cust-address" required rows="2" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600"></textarea>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-stone-800 border-b border-stone-200 pb-2 mb-4">Datos de la Tarjeta</h4>
+                    
+                    <div class="space-y-4 mb-6 bg-stone-50 p-4 rounded-lg border border-stone-200">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 mb-1">Número de Tarjeta <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <i class="fa-regular fa-credit-card absolute left-3 top-3 text-stone-400"></i>
+                                <input type="text" required placeholder="0000 0000 0000 0000" maxlength="19" class="w-full border border-stone-300 rounded-lg pl-10 pr-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-1">Vencimiento <span class="text-red-500">*</span></label>
+                                <input type="text" required placeholder="MM/YY" maxlength="5" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-stone-700 mb-1">CVV <span class="text-red-500">*</span></label>
+                                <input type="password" required placeholder="123" maxlength="4" class="w-full border border-stone-300 rounded-lg px-4 py-2 focus:ring-amber-600 focus:border-amber-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-amber-700 text-white py-3 rounded-lg font-bold hover:bg-amber-800 transition shadow-lg text-lg">
+                        Procesar Pago <span id="checkout-total-btn"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="invoice-modal" class="modal fixed inset-0 bg-black bg-opacity-60 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            
+            <div class="text-center mb-4">
+                <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fa-solid fa-check text-2xl text-green-600"></i>
+                </div>
+                <h3 class="font-bold text-xl text-stone-900">Transacción Aprobada</h3>
+            </div>
+
+            <div class="factura-ticket bg-stone-50 border border-stone-300 p-4 text-xs text-stone-800 rounded shadow-inner">
+                <div class="text-center border-b border-dashed border-stone-400 pb-3 mb-3">
+                    <h2 class="font-bold text-lg uppercase tracking-wide">MueblesNova S.A.</h2>
+                    <p>Cédula Jurídica: 3-101-987654</p>
+                    <p>San José, Costa Rica</p>
+                    <p>Tel: 8888-8888</p>
+                </div>
+                
+                <div class="border-b border-dashed border-stone-400 pb-3 mb-3">
+                    <p><strong>Factura Electrónica N°:</strong></p>
+                    <p id="inv-consecutivo" class="mb-1"></p>
+                    <p><strong>Clave Numérica:</strong></p>
+                    <p id="inv-clave" class="break-all text-[10px]"></p>
+                    <p class="mt-1"><strong>Fecha:</strong> <span id="inv-fecha"></span></p>
+                </div>
+
+                <div class="border-b border-dashed border-stone-400 pb-3 mb-3">
+                    <p><strong>Cliente:</strong> <span id="inv-cliente"></span></p>
+                    <p><strong>Cédula:</strong> <span id="inv-cedula"></span></p>
+                    <p><strong>Email:</strong> <span id="inv-email"></span></p>
+                </div>
+
+                <div class="mb-3">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-stone-300">
+                                <th class="pb-1">Cant</th>
+                                <th class="pb-1">Descripción</th>
+                                <th class="pb-1 text-right">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-items" class="align-top">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="border-t border-dashed border-stone-400 pt-3 text-right">
+                    <p class="mb-1">Subtotal: <span id="inv-subtotal" class="inline-block w-20"></span></p>
+                    <p class="mb-1">IVA (13%): <span id="inv-iva" class="inline-block w-20"></span></p>
+                    <p class="font-bold text-sm mt-2 border-t border-stone-300 pt-1">TOTAL: <span id="inv-total" class="inline-block w-20"></span></p>
+                </div>
+                
+                <div class="text-center mt-6 text-[10px] text-stone-500">
+                    <p>Autorizado mediante resolución DGT-R-033-2019</p>
+                    <p>Su orden para rastreo es: <strong id="inv-orden" class="text-stone-800"></strong></p>
+                </div>
+            </div>
+
+            <button onclick="finishOrder()" class="w-full mt-6 bg-stone-900 text-white py-3 rounded-lg font-bold hover:bg-stone-800 transition shadow">
+                Cerrar e ir a Rastreo
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "Sofá Modular Verde Oscuro", stock: 5, price: 450000, img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80" },
+            { id: 2, name: "Comedor de Madera (6 Sillas)", stock: 3, price: 320000, img: "https://images.unsplash.com/photo-1577140917170-285929fb55b7?auto=format&fit=crop&w=400&q=80" },
+            { id: 3, name: "Silla de Oficina Giratoria Gris", stock: 8, price: 85000, img: "https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=400&q=80" },
+            { id: 4, name: "Cama Matrimonial con Ropa Blanca", stock: 4, price: 550000, img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80" },
+            { id: 5, name: "Silla Minimalista de Madera Clara", stock: 6, price: 120000, img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&w=400&q=80" },
+            { id: 6, name: "Sala de Estar Moderna con Sofá Gris", stock: 2, price: 185000, img: "https://images.unsplash.com/photo-1593696140826-c58b021acf8b?auto=format&fit=crop&w=400&q=80" },
+            { id: 7, name: "Sillón Individual Mostaza", stock: 5, price: 145000, img: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80" },
+            { id: 8, name: "Silla Comedor Estilo Eames Blanca", stock: 12, price: 35000, img: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=400&q=80" },
+            { id: 9, name: "Estantería de Madera Alta", stock: 4, price: 110000, img: "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=400&q=80" },
+            { id: 10, name: "Consola de Madera para TV", stock: 3, price: 165000, img: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=400&q=80" },
+                        { id: 12, name: "Escritorio Minimalista de Madera", stock: 6, price: 130000, img: "https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?auto=format&fit=crop&w=400&q=80" },
+           
+            { id: 14, name: "Cómoda de Cajones Amplia", stock: 3, price: 175000, img: "https://images.unsplash.com/photo-1550226891-ef816aed4a98?auto=format&fit=crop&w=400&q=80" },
+            { id: 15, name: "Repisas Flotantes de Pared", stock: 15, price: 28000, img: "https://images.unsplash.com/photo-1507149833265-60c372daea22?auto=format&fit=crop&w=400&q=80" },
+            { id: 16, name: "Puff / Banqueta Tapizada Oscura", stock: 8, price: 45000, img: "https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=400&q=80" },
+            { id: 17, name: "Lámpara de Pie Metálica", stock: 10, price: 38000, img: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=400&q=80" },
+            
+            { id: 19, name: "Sillón de Terciopelo Azul", stock: 2, price: 155000, img: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80" },
+            { id: 20, name: "Juego de Sillas Rattan (Exterior)", stock: 4, price: 220000, img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80" }
+        ];
+
+        let cart = [];
+        let currentOrderNumber = "";
+
+        function formatCRC(amount) {
+            return '₡' + amount.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function init() {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                }, 700);
+            }, 2000);
+
+            renderProducts();
+            updateCartUI();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => {
+                const isOutOfStock = p.stock === 0;
+                const stockColor = p.stock > 3 ? 'text-green-600' : (p.stock > 0 ? 'text-amber-600' : 'text-red-600');
+                
+                return `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition border border-stone-200 flex flex-col h-full ${isOutOfStock ? 'opacity-70' : ''}">
+                    <img src="${p.img}" alt="${p.name}" class="w-full h-56 object-cover ${isOutOfStock ? 'grayscale' : ''}">
+                    <div class="p-5 flex flex-col flex-grow">
+                        <h3 class="font-bold text-lg text-stone-900 mb-1 flex-grow">${p.name}</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <p class="text-amber-700 font-bold text-xl">${formatCRC(p.price)} <span class="text-xs text-stone-400 font-normal">IVAI</span></p>
+                            <span class="text-sm font-semibold ${stockColor}">${isOutOfStock ? 'Agotado' : `Disp: ${p.stock}`}</span>
+                        </div>
+                        <button onclick="addToCart(${p.id})" ${isOutOfStock ? 'disabled' : ''} class="w-full ${isOutOfStock ? 'bg-stone-400 cursor-not-allowed' : 'bg-stone-900 hover:bg-amber-700'} text-white py-2.5 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid ${isOutOfStock ? 'fa-ban' : 'fa-cart-plus'} mr-2"></i> ${isOutOfStock ? 'Sin Inventario' : 'Agregar al Carrito'}
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existing = cart.find(item => item.id === productId);
+            
+            const currentQtyInCart = existing ? existing.qty : 0;
+            
+            if (currentQtyInCart >= product.stock) {
+                alert(`Lo sentimos, solo tenemos ${product.stock} unidad(es) de este producto en inventario.`);
+                return;
+            }
+
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            
+            updateCartUI();
+            
+            const badge = document.getElementById('cart-badge');
+            badge.classList.add('scale-125');
+            setTimeout(() => badge.classList.remove('scale-125'), 200);
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            const badge = document.getElementById('cart-badge');
+            
+            badge.innerText = cart.reduce((acc, item) => acc + item.qty, 0);
+
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-stone-500 text-center py-10"><i class="fa-solid fa-basket-shopping text-4xl mb-3 block text-stone-300"></i>Tu carrito está vacío.</p>`;
+                document.getElementById('cart-subtotal').innerText = "₡0.00";
+                document.getElementById('cart-total').innerText = "₡0.00";
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center gap-4 border-b border-stone-200 pb-4 last:border-0 last:pb-0 pt-4 first:pt-0">
+                    <img src="${item.img}" class="w-24 h-24 object-cover rounded shadow-sm border border-stone-100">
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-stone-900">${item.name}</h4>
+                        <p class="text-stone-500 text-sm mt-1">Cantidad: ${item.qty} x ${formatCRC(item.price)}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-stone-900 mb-2">${formatCRC(item.qty * item.price)}</p>
+                        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 text-sm font-medium"><i class="fa-solid fa-trash mr-1"></i>Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((acc, item) => acc + (item.qty * item.price), 0);
+            document.getElementById('cart-subtotal').innerText = formatCRC(total);
+            document.getElementById('cart-total').innerText = formatCRC(total);
+        }
+
+        function openCheckoutModal() {
+            if (cart.length === 0) {
+                alert("Agrega productos al carrito primero.");
+                return;
+            }
+            const total = cart.reduce((acc, item) => acc + (item.qty * item.price), 0);
+            document.getElementById('checkout-total-btn').innerText = `(${formatCRC(total)})`;
+            document.getElementById('checkout-modal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function generateHaciendaData() {
+            const date = new Date();
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear() - 2000).padStart(2, '0');
+            
+            const randomPart = Array.from({length: 19}, () => Math.floor(Math.random() * 10)).join('');
+            const consecutivoStr = "0010000101" + Array.from({length: 10}, () => Math.floor(Math.random() * 10)).join('');
+            
+            const clave = `506${day}${month}${year}003101987654${consecutivoStr.substring(0,10)}1${randomPart}`;
+            
+            return {
+                clave: clave,
+                consecutivo: consecutivoStr,
+                fecha: `${day}/${month}/20${year} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`
+            };
+        }
+
+        function processPayment(event) {
+            event.preventDefault(); 
+            
+            const name = document.getElementById('cust-name').value;
+            const cedula = document.getElementById('cust-id').value;
+            const email = document.getElementById('cust-email').value;
+
+            const totalIVAI = cart.reduce((acc, item) => acc + (item.qty * item.price), 0);
+            const subtotal = totalIVAI / 1.13;
+            const iva = totalIVAI - subtotal;
+
+            const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
+            currentOrderNumber = orderId;
+            
+            const hacienda = generateHaciendaData();
+
+            document.getElementById('inv-consecutivo').innerText = hacienda.consecutivo;
+            document.getElementById('inv-clave').innerText = hacienda.clave;
+            document.getElementById('inv-fecha').innerText = hacienda.fecha;
+            
+            document.getElementById('inv-cliente').innerText = name;
+            document.getElementById('inv-cedula').innerText = cedula;
+            document.getElementById('inv-email').innerText = email;
+            document.getElementById('inv-orden').innerText = orderId;
+
+            const itemsHtml = cart.map(item => `
+                <tr class="border-b border-stone-200 border-dashed">
+                    <td class="py-1">${item.qty}</td>
+                    <td class="py-1 pr-2 truncate max-w-[150px]">${item.name}</td>
+                    <td class="py-1 text-right">${formatCRC(item.price * item.qty)}</td>
+                </tr>
+            `).join('');
+            document.getElementById('inv-items').innerHTML = itemsHtml;
+
+            document.getElementById('inv-subtotal').innerText = formatCRC(subtotal);
+            document.getElementById('inv-iva').innerText = formatCRC(iva);
+            document.getElementById('inv-total').innerText = formatCRC(totalIVAI);
+
+            cart.forEach(cartItem => {
+                const product = products.find(p => p.id === cartItem.id);
+                if (product) {
+                    product.stock -= cartItem.qty;
+                }
+            });
+
+            closeModal('checkout-modal');
+            document.getElementById('invoice-modal').classList.add('active');
+            
+            cart = [];
+            updateCartUI();
+            renderProducts(); 
+            document.getElementById('payment-form').reset();
+        }
+
+        function finishOrder() {
+            closeModal('invoice-modal');
+            switchTab('tracking-view');
+            document.getElementById('order-input').value = currentOrderNumber;
+            trackOrder();
+        }
+
+        function payWithWhatsApp() {
+            if (cart.length === 0) {
+                alert("Agrega productos al carrito primero.");
+                return;
+            }
+            
+            let message = "Hola MueblesNova, quiero realizar el siguiente pedido:\n\n";
+            cart.forEach(item => {
+                message += `- ${item.qty}x ${item.name} (${formatCRC(item.price * item.qty)})\n`;
+            });
+            const total = cart.reduce((acc, item) => acc + (item.qty * item.price), 0);
+            message += `\n*Total a pagar: ${formatCRC(total)} (IVAI)*\n\nPor favor indíquenme los pasos para el pago vía SINPE Móvil o Transferencia.`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/50688888888?text=${encodedMessage}`, '_blank');
+        }
+
+        function trackOrder() {
+            const input = document.getElementById('order-input').value.trim();
+            if (input === "") {
+                alert("Por favor ingresa un número de orden o consecutivo válido.");
+                return;
+            }
+            
+            document.getElementById('track-order-id').innerText = input;
+            document.getElementById('tracking-result').classList.remove('hidden');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
